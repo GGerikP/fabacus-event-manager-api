@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Enable Corepack for Yarn Berry
+RUN corepack enable
+
+# Install dependencies first
+# 👇 Copy your config file BEFORE install
+COPY .yarn ./.yarn
+COPY .yarnrc.yml ./
+COPY package.json yarn.lock ./
+
+RUN yarn install --immutable
+
+# Install ts-node-dev for hot-reloading
+RUN yarn add --dev ts-node-dev
+
+# App source will be mounted by Docker volume
+CMD ["yarn", "dev"]
