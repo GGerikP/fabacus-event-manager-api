@@ -1,0 +1,269 @@
+openapi: 3.0.0
+info:
+  title: Fabacus Event Manager API
+  description: API documentation for the Fabacus Event Manager.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /events:
+    get:
+      summary: Get a welcome message from the event manager
+      responses:
+        '200':
+          description: A welcome message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hello from the event manager
+    post:
+      summary: Create a new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventDto'
+      responses:
+        '202':
+          description: Event creation queued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Event creation queued successfully
+                  status:
+                    type: string
+                    example: published
+                  id:
+                    type: string
+                    example: event-id-123
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Missing seating_plan in request body
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+  /events/{id}:
+    get:
+      summary: Check for duplicate events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the event
+      responses:
+        '202':
+          description: Event queued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Event queued successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Missing id or payload in request body
+        '409':
+          description: Duplicate event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Duplicate event
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+  /seat-reservations:
+    post:
+      summary: Reserve a seat for a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeatReservationDto'
+      responses:
+        '202':
+          description: Seat reserved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: Seat reserved successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid eventId: not a valid UUID"
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: This seat is already reserved.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+    patch:
+      summary: Refresh the TTL for a reserved seat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeatReservationDto'
+      responses:
+        '200':
+          description: TTL refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: TTL refreshed successfully
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid eventId: not a valid UUID"
+        '404':
+          description: Key does not exist or has already expired
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Key does not exist or has already expired
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Internal Server Error
+    get:
+      summary: Get a welcome message from the seat reservation router
+      responses:
+        '200':
+          description: A welcome message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hello from the seat reservation router
+components:
+  schemas:
+    CreateEventDto:
+      type: object
+      required:
+        - seating_plan
+      properties:
+        seating_plan:
+          type: object
+          properties:
+            grid:
+              type: object
+              properties:
+                row_count:
+                  type: integer
+                  example: 10
+                column_count:
+                  type: integer
+                  example: 10
+    CreateSeatReservationDto:
+      type: object
+      required:
+        - eventId
+        - seatId
+        - personId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        seatId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        personId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
